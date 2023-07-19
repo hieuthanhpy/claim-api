@@ -18,6 +18,12 @@ export class UsersService {
       password: 'guess',
       role: 'claimmanager',
     },
+    {
+      userId: 3,
+      username: 'claimcustomer',
+      password: 'guess',
+      role: 'claimcustomer',
+    },
   ];
 
   async findOne(username: string): Promise<User | undefined> {

@@ -5,6 +5,7 @@ export enum ClaimStatus {
   INCOMPLETE = 'INCOMPLETE',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  SUBMITTED = 'SUBMITTED',
 }
 @Entity()
 export class ClaimEntity {

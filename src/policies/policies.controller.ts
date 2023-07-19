@@ -8,8 +8,8 @@ import {
 } from './models/filter-policies/filter-policies';
 
 @ApiTags('Policies')
-// @ApiBearerAuth()
-// @UseGuards(AuthGuard)
+@ApiBearerAuth()
+@UseGuards(AuthGuard)
 @Controller('api/policies')
 export class PoliciesController {
   constructor(private policiesService: PoliciesService) {}

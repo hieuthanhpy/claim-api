@@ -6,7 +6,12 @@ import {
 import { ClaimEntity, ClaimStatus } from './claim.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ApproveClaim, Claim, ClaimFilter, UpdateClaim } from './claim.model';
+import {
+  UpdateStatusClaim,
+  Claim,
+  ClaimFilter,
+  UpdateClaim,
+} from './claim.model';
 import { BenefitEntity } from 'src/policies/policies.entity';
 
 @Injectable()
@@ -48,15 +53,19 @@ export class ClaimService {
 
   async getClaimHistories(filter: ClaimFilter): Promise<Claim[] | undefined> {
     try {
-      const queryBuilder = this.claimRepo.createQueryBuilder('claim');
+      const queryBuilder = this.claimRepo.createQueryBuilder('claim_entity');
 
-      queryBuilder.where({
-        idCardNumber: filter?.idCardNumber,
-        policyNumber: filter?.policyNumber,
-      });
+      queryBuilder
+        .where({
+          idCardNumber: filter?.idCardNumber,
+        })
+        .andWhere({
+          policyNumber: filter?.policyNumber,
+        });
 
       return await queryBuilder.getMany();
     } catch (error) {
+      console.log('error', error);
       throw new InternalServerErrorException(error);
     }
   }
@@ -79,34 +88,34 @@ export class ClaimService {
     }
   }
 
-  async approveClaim({
+  async updateStatus({
     claimId,
     status,
-    benefits,
-  }: ApproveClaim): Promise<ClaimEntity | undefined> {
+  }: UpdateStatusClaim): Promise<ClaimEntity | undefined> {
     try {
       const claim = await this.claimRepo.findOneBy({ claimId: claimId });
 
       if (!claim) {
         throw new NotFoundException('not found claim');
       } else {
-        benefits.forEach(
-          async (item: BenefitEntity & { initialReserve: number }) => {
-            const benefit = await this.benefitRepo.findOneBy({
-              policyNumber: item.policyNumber,
-              subCoverageCode: item.subCoverageCode,
-            });
-
-            if (benefit) {
-              await this.benefitRepo.save({
-                ...benefit,
-                remainInsured: (
-                  parseInt(benefit.remainInsured) - item.initialReserve
-                ).toString(),
+        status === ClaimStatus.APPROVED &&
+          JSON.parse(claim.data).general.sumInsured.forEach(
+            async (item: BenefitEntity & { initialReserve: number }) => {
+              const benefit = await this.benefitRepo.findOneBy({
+                policyNumber: item.policyNumber,
+                subCoverageCode: item.subCoverageCode,
               });
-            }
-          },
-        );
+
+              if (benefit) {
+                await this.benefitRepo.save({
+                  ...benefit,
+                  remainInsured: (
+                    parseInt(benefit.remainInsured) - item.initialReserve
+                  ).toString(),
+                });
+              }
+            },
+          );
 
         return this.claimRepo
           .save({ ...claim, status: status })

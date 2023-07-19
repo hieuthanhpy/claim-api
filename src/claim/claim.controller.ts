@@ -5,11 +5,17 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ClaimService } from './claim.service';
-import { ApproveClaim, Claim, ClaimFilter, UpdateClaim } from './claim.model';
+import {
+  UpdateStatusClaim,
+  Claim,
+  ClaimFilter,
+  UpdateClaim,
+} from './claim.model';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @ApiTags('Claim')
@@ -25,7 +31,7 @@ export class ClaimController {
   }
 
   @Get('history')
-  async getClaimHistories(@Param() query: ClaimFilter) {
+  async getClaimHistories(@Query() query: ClaimFilter) {
     return this.claimService.getClaimHistories(query);
   }
 
@@ -39,9 +45,9 @@ export class ClaimController {
     return this.claimService.createClaim(body);
   }
 
-  @Post('approve')
-  async approveRejectClaim(@Body() body: ApproveClaim) {
-    return this.claimService.approveClaim(body);
+  @Post('status')
+  async updateStatus(@Body() body: UpdateStatusClaim) {
+    return this.claimService.updateStatus(body);
   }
 
   @Put()

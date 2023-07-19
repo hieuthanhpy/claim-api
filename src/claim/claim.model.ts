@@ -12,7 +12,7 @@ export class Claim {
   idCardNumber: string;
 }
 
-export class ApproveClaim {
+export class UpdateStatusClaim {
   @ApiProperty()
   status: ClaimStatus;
 
