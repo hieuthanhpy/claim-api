@@ -12,7 +12,7 @@ export class ClaimEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column('text')
   data: string;
 
   @Column()
