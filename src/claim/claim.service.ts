@@ -51,7 +51,7 @@ export class ClaimService {
     }
   }
 
-  async getClaimHistories(filter: ClaimFilter): Promise<Claim[] | undefined> {
+   async getClaimHistories(filter: ClaimFilter): Promise<Claim[] | undefined> {
     try {
       const queryBuilder = this.claimRepo.createQueryBuilder('claim_entity');
 
@@ -63,13 +63,18 @@ export class ClaimService {
           policyNumber: filter?.policyNumber,
         });
 
-      return await queryBuilder.getMany();
+      return await queryBuilder
+        .getMany()
+        .then((claims) =>
+          claims.map((item) => ({ ...item, data: JSON.parse(item.data) })),
+        );
     } catch (error) {
       console.log('error', error);
       throw new InternalServerErrorException(error);
     }
   }
 
+  
   async createClaim(claim: Claim): Promise<ClaimEntity | undefined> {
     try {
       const claimId = 'ITC_CLAIM_' + new Date().getTime();
