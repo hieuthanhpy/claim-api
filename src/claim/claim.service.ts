@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ClaimEntity, ClaimStatus } from './claim.entity';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   UpdateStatusClaim,
@@ -13,7 +13,12 @@ import {
   UpdateClaim,
 } from './claim.model';
 import { BenefitEntity } from 'src/policies/policies.entity';
+import { ContextService } from 'src/services/context';
+import { Role } from 'src/users/users.enum';
+import { ClaimsFilters } from './model/claims-filters/claims-filters';
+import { paginate } from 'nestjs-typeorm-paginate';
 
+export type Claims = any;
 @Injectable()
 export class ClaimService {
   constructor(
@@ -21,15 +26,53 @@ export class ClaimService {
     private claimRepo: Repository<ClaimEntity>,
     @InjectRepository(BenefitEntity)
     private benefitRepo: Repository<BenefitEntity>,
+    private contextService: ContextService,
   ) {}
 
-  async getClaims(): Promise<Claim[] | undefined> {
+  async getClaims(filter: ClaimsFilters): Promise<Claims | undefined> {
     try {
-      const claims = await this.claimRepo.find();
+      const { keyword, sortBy, sortDir, page, limit } = filter;
 
-      if (!claims) throw new NotFoundException('not found claim');
+      const queryBuilder = this.claimRepo.createQueryBuilder('claims_entity');
 
-      return claims.map((item) => ({ ...item, data: JSON.parse(item.data) }));
+      /* Search by Policy No, Full Name, Group or ID Card... */
+      if (keyword) {
+        queryBuilder.andWhere(
+          new Brackets((qb) => {
+            qb.orWhere('claims_entity.policyNumber LIKE :keyword', {
+              keyword: `%${keyword}%`,
+            })
+              .orWhere('claims_entity.claimId LIKE :keyword', {
+                keyword: `%${keyword}%`,
+              })
+              .orWhere('claims_entity.idCardNumber LIKE :keyword', {
+                keyword: `%${keyword}%`,
+              });
+          }),
+        );
+      }
+
+      /* Sort and order */
+      if (sortBy && sortDir) {
+        sortDir.toUpperCase() === 'DESC'
+          ? queryBuilder.orderBy(`claims_entity.${sortBy}`, 'DESC')
+          : queryBuilder.orderBy(`claims_entity.${sortBy}`, 'ASC');
+      }
+
+      /* Paginating if have page and limit parameters */
+      if (page && limit) {
+        return await paginate<Claims>(queryBuilder, { page, limit }).then(
+          (value) => ({
+            ...value,
+            items: value.items.map((item) => ({
+              ...item,
+              data: JSON.parse(item.data),
+            })),
+          }),
+        );
+      }
+
+      return await queryBuilder.getMany();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -51,7 +94,7 @@ export class ClaimService {
     }
   }
 
-   async getClaimHistories(filter: ClaimFilter): Promise<Claim[] | undefined> {
+  async getClaimHistories(filter: ClaimFilter): Promise<Claim[] | undefined> {
     try {
       const queryBuilder = this.claimRepo.createQueryBuilder('claim_entity');
 
@@ -74,7 +117,6 @@ export class ClaimService {
     }
   }
 
-  
   async createClaim(claim: Claim): Promise<ClaimEntity | undefined> {
     try {
       const claimId = 'ITC_CLAIM_' + new Date().getTime();
@@ -86,6 +128,8 @@ export class ClaimService {
           status: ClaimStatus.INCOMPLETE,
           policyNumber: claim.policyNumber,
           idCardNumber: claim.idCardNumber,
+          createdAt: new Date().toISOString(),
+          createdBy: this.contextService.role,
         })
         .then((claim) => ({ ...claim, data: JSON.parse(claim.data) }));
     } catch (error) {
@@ -103,6 +147,15 @@ export class ClaimService {
       if (!claim) {
         throw new NotFoundException('not found claim');
       } else {
+        if (
+          this.contextService.role !== Role.MANAGER &&
+          [ClaimStatus.APPROVED, ClaimStatus.REJECTED].includes(status)
+        ) {
+          throw new NotFoundException(
+            'User do not have permission for this action',
+          );
+        }
+
         status === ClaimStatus.APPROVED &&
           JSON.parse(claim.data).general.sumInsured.forEach(
             async (item: BenefitEntity & { initialReserve: number }) => {

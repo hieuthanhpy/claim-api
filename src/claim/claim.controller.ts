@@ -17,6 +17,7 @@ import {
   UpdateClaim,
 } from './claim.model';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { ClaimsFilters } from './model/claims-filters/claims-filters';
 
 @ApiTags('Claim')
 @ApiBearerAuth()
@@ -26,8 +27,8 @@ export class ClaimController {
   constructor(private claimService: ClaimService) {}
 
   @Get()
-  async getClaims() {
-    return this.claimService.getClaims();
+  async getClaims(@Query() query: ClaimsFilters) {
+    return this.claimService.getClaims(query);
   }
 
   @Get('history')

@@ -1,3 +1,4 @@
+import { Role } from 'src/users/users.enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum ClaimStatus {
@@ -12,7 +13,7 @@ export class ClaimEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('text')
+  @Column()
   data: string;
 
   @Column()
@@ -26,4 +27,10 @@ export class ClaimEntity {
 
   @Column()
   idCardNumber: string;
+
+  @Column()
+  createdAt: string;
+
+  @Column()
+  createdBy: Role;
 }

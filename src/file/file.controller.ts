@@ -53,9 +53,11 @@ export class FileController {
     if (fileDownload == null) {
       throw new NotFoundException('File not found');
     }
+
     res.set({
       'Content-Type': fileDownload.mimeType,
     });
+
     return new StreamableFile(fileDownload.file);
   }
 }
