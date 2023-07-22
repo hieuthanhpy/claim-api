@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { BENEFITS, insuredList } from './policies.data';
+import { insuredList } from './policies.data';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BenefitEntity, PoliciesEntity } from './policies.entity';
 import { Brackets, Repository } from 'typeorm';
@@ -12,6 +12,7 @@ import {
   PolicyDetail,
 } from './models/filter-policies/filter-policies';
 import { paginate } from 'nestjs-typeorm-paginate';
+import { BENEFITS } from './benefits.data';
 
 export type Policies = any;
 
@@ -132,6 +133,9 @@ export class PoliciesService {
       benefit.subCoverageName = x.SUB_COVERAGE_NAME;
       benefit.limit = x.LIMIT;
       benefit.remainInsured = x.LIMIT;
+      benefit.deductible = x.DEDUCTIBLE;
+      benefit.copay = x.COPAY;
+      benefit.punishment = x.PUNISHMENT;
 
       this.benefitRepository.save(benefit);
     });

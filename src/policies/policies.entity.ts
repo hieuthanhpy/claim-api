@@ -91,6 +91,28 @@ export class BenefitEntity {
   @Column()
   limit: string;
 
+  @Column({
+    default: 0,
+  })
+  adjusted: number;
+
+  @Column({
+    default: 0,
+  })
+  deductible: number;
+
+  @Column({
+    default: 0,
+    type: 'float',
+  })
+  copay: number;
+
+  @Column({
+    default: 0,
+    type: 'float',
+  })
+  punishment: number;
+
   @Column()
   remainInsured: string;
 }

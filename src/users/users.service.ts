@@ -24,6 +24,7 @@ export class UsersService {
       username: 'claimcustomer',
       password: 'guess',
       role: Role.CUSTOMER,
+      idCardNumber: '066202018697',
     },
   ];
 

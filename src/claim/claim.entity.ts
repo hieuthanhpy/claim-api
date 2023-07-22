@@ -1,19 +1,21 @@
-import { Role } from 'src/users/users.enum';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Role } from "src/users/users.enum";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 export enum ClaimStatus {
-  PENDING = 'PENDING',
-  INCOMPLETE = 'INCOMPLETE',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  SUBMITTED = 'SUBMITTED',
+  PENDING = "PENDING",
+  INCOMPLETE = "INCOMPLETE",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  SUBMITTED = "SUBMITTED",
 }
 @Entity()
 export class ClaimEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column()
+  @Column({
+    type: "text",
+  })
   data: string;
 
   @Column()
@@ -33,4 +35,7 @@ export class ClaimEntity {
 
   @Column()
   createdBy: Role;
+
+  @Column()
+  updatedAt: string;
 }

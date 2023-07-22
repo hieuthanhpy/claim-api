@@ -129,9 +129,13 @@ export class ClaimService {
           policyNumber: claim.policyNumber,
           idCardNumber: claim.idCardNumber,
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           createdBy: this.contextService.role,
         })
-        .then((claim) => ({ ...claim, data: JSON.parse(claim.data) }));
+        .then((claim) => ({
+          ...claim,
+          data: JSON.parse(claim.data),
+        }));
     } catch (error) {
       throw new NotFoundException('not found claim');
     }
@@ -158,7 +162,7 @@ export class ClaimService {
 
         status === ClaimStatus.APPROVED &&
           JSON.parse(claim.data).general.sumInsured.forEach(
-            async (item: BenefitEntity & { initialReserve: number }) => {
+            async (item: BenefitEntity & { finalInsuredClaim: number }) => {
               const benefit = await this.benefitRepo.findOneBy({
                 policyNumber: item.policyNumber,
                 subCoverageCode: item.subCoverageCode,
@@ -168,7 +172,7 @@ export class ClaimService {
                 await this.benefitRepo.save({
                   ...benefit,
                   remainInsured: (
-                    parseInt(benefit.remainInsured) - item.initialReserve
+                    parseInt(benefit.remainInsured) - item.finalInsuredClaim
                   ).toString(),
                 });
               }
@@ -176,7 +180,11 @@ export class ClaimService {
           );
 
         return this.claimRepo
-          .save({ ...claim, status: status })
+          .save({
+            ...claim,
+            status: status,
+            updatedAt: new Date().toISOString(),
+          })
           .then((claim) => ({ ...claim, data: JSON.parse(claim.data) }));
       }
     } catch (error) {
